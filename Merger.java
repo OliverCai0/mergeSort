@@ -1,12 +1,16 @@
+
 /**
   Represent a merge operation for sorted lists,
   as described in README.md
+  Show two different implementations of the merge:
+  o  mergeRange_whileStyle
+  o  mergeRange_recursive
  */
 import java.util.ArrayList;
 
 public class Merger {
 
-    ArrayList<String> usersData;
+    ArrayList<String> usersData, localCopy;
 
     /**
       Construct an instance from a list of data
@@ -21,79 +25,148 @@ public class Merger {
       Merge the sorted sub-lists.
      */
     public void merge(
-      // indexes of sub-list boundaries; see README
+      // indexes of sub-list boundaries in usersData; see README
         int start0  // index of first item in list0
       , int start1  // index of first item in list1
                     // = just past end of list0
-      , int nItems  // number of items in the merged list
-                    // = just past end of list1
+      , int end1    // index past end of list1
       ) {
-        System.out.println(nItems);
-        ArrayList<String> list0 = new ArrayList<String>();
-        for(int index = start0; index < start1; index ++){
-          list0.add(usersData.get(index));
-          //System.out.println(list0.size());
-        }
-        ArrayList<String> list1 = new ArrayList<String>();
-        for(int index = start1; index < nItems; index ++){
-          list1.add(usersData.get(index));
-          //System.out.println(list1.size());
-        }
-        ArrayList<String> sortedList = new ArrayList<String>(usersData.size());
-        for(int index = 0; index < start0; index ++){
-          sortedList.add(index, usersData.get(index));
-          //System.out.println(sortedList.size());
+        /* copy the user's data, so that its two lists
+         can be merged into usersData */
+        localCopy = new ArrayList<String>( end1 - start0);
+        for( int iUserData = start0; iUserData < end1; iUserData++)
+            localCopy.add( usersData.get( iUserData));
+        // temp for debugging
+        System.out.println( "localCopy: " + localCopy);
+
+        /* Invoke one of the two styles of programming the merge
+           Since a real solution would contain only one of these,
+           violate NTTSTT in computing the arguments.
+         */
+
+        mergeRange_whileStyle( start0
+                             , 0, start1 - start0
+                             , start1 - start0, end1 - start0);
+
+        // mergeRange_recursive( start0
+                            // , 0, start1 - start0
+                            // , start1 - start0, end1 - start0);
+    }
+
+
+    /**
+      problem: Merge the user data from the given range in localCopy
+        into the usersData.
+     recursive abstraction: When I am asked to {problem statement},
+       the recursive abstraction can merge the results of a range
+       that is one item smaller.
+     */
+    private void mergeRange_whileStyle(
+        int target // destination in usersData. Probably redundant.
+
+        // boundaries of lists in localCopy, NOT usersData!
+      , int localStart0  // index of first item in list0
+      , int localEnd0    // just past end of list0
+      , int localStart1  // index of first item in list1
+      , int localEnd1    // just past end of list0
+      ) {
+
+        while( // item(s) remain in both lists
+                  localStart0 < localEnd0
+               && localStart1 < localEnd1 )
+            // copy the smaller item
+            if( localCopy.get( localStart0).compareTo(
+                localCopy.get( localStart1)) < 0)
+                usersData.set( target++, localCopy.get( localStart0++));
+            else
+                usersData.set( target++, localCopy.get( localStart1++));
+        /* At this point, one of the lists is exhausted, maybe both.
+           So copy the remaining data.
+           Which copy operation goes first is immaterial, since
+           (at least) one copy operation is trivial.
+         */
+
+        // Copy the (possibly null) remainder of list0
+        while( localStart0 < localEnd0)
+            usersData.set( target++, localCopy.get( localStart0++));
+
+        // Similarly for list1: copy the (possibly null) remainder
+        while( localStart1 < localEnd1)
+            usersData.set( target++, localCopy.get( localStart1++));
+      }
+
+
+    /**
+      problem: Merge the user data from the given range in localCopy
+        into the usersData.
+     recursive abstraction: When I am asked to {problem statement},
+       the recursive abstraction can merge the results of a range
+       that is one item smaller.
+     */
+    private void mergeRange_recursive(
+        int target // destination in usersData. Probably redundant.
+
+        // boundaries of lists in localCopy, NOT usersData!
+      , int localStart0  // index of first item in list0
+      , int localEnd0    // just past end of list0
+      , int localStart1  // index of first item in list1
+      , int localEnd1    // just past end of list0
+      ) {
+        // temp for debugging
+        System.out.println(
+            " target = "      + target
+          + " localStart0 = " + localStart0
+          + " localEnd0 = "   + localEnd0
+          + " localStart1 = " + localStart1
+          + " localEnd1 = "   + localEnd1
+          );
+
+        /* There are 4 cases:
+           o  both ranges are exhausted
+           o  list0 is exhausted but item(s) remain in list1
+           o  list1 is exhausted but item(s) remain in list0
+           o  item(s) remain in both lists
+         */
+
+        if( // both ranges are exhausted
+            localStart0 == localEnd0 && localStart1 == localEnd1
+          )
+            // solution to base case
+            return;  // merge is done
+        else{ // there is at least 1 item remaining to merge
+            if( // list0 exhausted
+                localStart0 == localEnd0
+              )
+               // take an item from list1
+                usersData.set( target++, localCopy.get( localStart1++));
+
+            // similarly for exhausted list1
+            else if( localStart1 == localEnd1)
+                usersData.set( target++, localCopy.get( localStart0++));
+
+            else // items remain in both lists
+                // copy the smaller item
+                if( localCopy.get( localStart0).compareTo(
+                    localCopy.get( localStart1)) < 0)
+                    usersData.set( target++, localCopy.get( localStart0++));
+                else
+                    usersData.set( target++, localCopy.get( localStart1++));
+            mergeRange_recursive( target, localStart0, localEnd0
+                                        , localStart1, localEnd1);
         }
 
-        while(list0.size() > 0 || list1.size() > 0){
-          System.out.println(sortedList);
-          //System.out.println(list0);
-          //System.out.println(list1);
-          if(list0.size() == 0){
-            for(String element : list1){
-              sortedList.add(element);
-            }
-            list1.clear();
-          }
-          if(list1.size() == 0){
-            for(String element : list0){
-              sortedList.add(element);
-            }
-            list0.clear();
-          }
-          else{
-            if(list0.get(0).compareTo(list1.get(0)) > 0){
-            sortedList.add(list1.get(0));
-           // System.out.println(list1);
-            list1.remove(0);
-          }
-          else{
-            sortedList.add(list0.get(0));
-          //  System.out.println(list0);
-            list0.remove(0);
-          }
-        }
-        }
-        System.out.println(nItems);
-        for(int index = nItems; index < usersData.size(); index ++){
-          //System.out.println("triggered");
-          sortedList.add(usersData.get(index));
-        }
-
-        usersData = sortedList;
-        }
-        
+    }
 
 
     /**
       @return a string representation of the user's data
      */
     public String toString() {
-        return "" + usersData; 
+        return "" + usersData;
     }
 
-    
-    /** 
+
+    /**
       @return the boolean value of the statement
          "the data in the range are in ascending order"
      */
@@ -101,10 +174,15 @@ public class Merger {
         for( int i = startAt
            ; i < endBefore -1 // stop early, because comparing to next
            ; i++
-           ){
-            System.out.println("Comparing " + usersData.get(i) + " to " + usersData.get(i+1));
-            if( usersData.get(i).compareTo( usersData.get(i+1)) > 0) return false;
-           }
+           )
+            if( usersData.get(i).compareTo( usersData.get(i+1)) > 0) {
+                 System.out.println( "trouble between position " + i
+                                  + ", which holds " + usersData.get(i)
+                                  + ", and position " + (i +1)
+                                  + ", which holds " + usersData.get(i +1)
+                                  );
+               return false;
+            }
         return true;
-}
+    }
 }
